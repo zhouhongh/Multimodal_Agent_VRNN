@@ -11,41 +11,29 @@ import os
 import utils
 from tqdm import tqdm
 import opts
+import torch.nn.utils.rnn as rnn_utils
+import torch
 
-class FormatData(object):
-    """
-    Form train/validation data.
-    形成字典，分别包含编码器输入，解码器输入，解码器输出（GT）
-    """
+def collate_fn(data):
+    data_x = torch.Tensor(data[:-1, :])
+    data_y = torch.Tensor(data[1:, :])
+    # data_x and data_y has the same length
+    data_x.sort(key=lambda x: len(x), reverse=True)
+    data_y.sort(key=lambda y: len(y), reverse=True)
+    data_length = [len(sq) for sq in data_x]
+    # pad the sequence length to the last one with 0, for the using of mini-batch
+    x = rnn_utils.pad_sequence(data_x, batch_first=True, padding_value=0)
+    y = rnn_utils.pad_sequence(data_y, batch_first=True, padding_value=0)
 
-    def __init__(self, config):
-        self.config = config
-
-    def __call__(self, sample, train):
-
-        total_frames = self.config.input_window_size + self.config.output_window_size
-
-        video_frames = sample.shape[0]
-        idx = np.random.randint(1, video_frames - total_frames) #在可选范围中随机挑选帧起始点
-
-        data_seq = sample[idx:idx + total_frames, :]
-        encoder_inputs = data_seq[:self.config.input_window_size - 1, :]
-        # 最后一个弃掉了,这里代码还可以精简
-        if train:
-            decoder_inputs = data_seq[self.config.input_window_size - 1:
-                                      self.config.input_window_size - 1 + self.config.output_window_size, :]
-        else:
-            decoder_inputs = data_seq[self.config.input_window_size - 1:self.config.input_window_size, :]
-        decoder_outputs = data_seq[self.config.input_window_size:, :]
-        return {'encoder_inputs': encoder_inputs, 'decoder_inputs': decoder_inputs, 'decoder_outputs': decoder_outputs}
-
+    return x, y, data_length
 
 class SBU_Dataset(Dataset):
 
     def __init__(self, opt):
         self.dataset_path = os.path.join(opt.dataset_root, opt.dataset)
-        train_data = None
+        train_data = []
         self.seq_num = 0
+        self.set_start_nums = []
         if opt.dataset == 'SBU':
             # x and y are normalized as [0, 1] while z is normalized as[0, 7.8125]
             if opt.mode == 'train':
@@ -53,10 +41,9 @@ class SBU_Dataset(Dataset):
                 complete_train = None
                 # load all data first
                 print("************start loading SBU dataset!!!*************")
-                for i in tqdm(range(1,21)):
-                    set_data = {}
-                    for cat in range(1,9):
-                        cat_data = []
+                for i in tqdm(range(1, 22)):
+                    self.set_start_nums.append(self.seq_num)
+                    for cat in range(1, 9):
                         tmp_path = os.path.join(self.dataset_path, '%02d' % i, '%02d' % cat)
                         if not os.path.exists(tmp_path):
                             continue
@@ -68,23 +55,23 @@ class SBU_Dataset(Dataset):
                                 complete_train = one_seq_data
                             else:
                                 complete_train = np.concatenate((complete_train, one_seq_data), axis=0)
-                            cat_data.append(one_seq_data)
-                        set_data['%02d' % cat] = cat_data
-                    train_data['%02d' % i] = set_data
-                print(complete_train.shape) #[6456,30,3]
-                print("************complete loading SBU dataset!!!*************")
+                            train_data.append(one_seq_data)
+                print(complete_train.shape)
                 # calculate the mean and std
                 data_mean, data_std = utils.normalization_stats(complete_train)
                 opt.train_mean = data_mean
                 opt.train_std = data_std
                 self.train_data = utils.normalize_SBU_data(train_data, data_mean, data_std)
+                print("************complete loading SBU dataset!!!*************")
 
     def __len__(self):
-
         return self.seq_num
 
     def __getitem__(self, idx):
-        pass
+
+        return self.train_data[idx]
+
+
 
 
 
@@ -100,6 +87,9 @@ class SBU_Dataset(Dataset):
 if __name__ == '__main__':
     opt = opts.parse_opt()
     dataset = SBU_Dataset(opt)
+
+
+
 
 
 

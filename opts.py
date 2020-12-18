@@ -7,15 +7,13 @@ import argparse
 
 def parse_opt():
     parser = argparse.ArgumentParser()
+
     # overall settings
     parser.add_argument(
         '--mode',
         type=str,
         default='train',
         help='train or test')
-
-    # settings for the SBU datset
-
     parser.add_argument(
         '--dataset',
         type=str,
@@ -26,6 +24,35 @@ def parse_opt():
         type=str,
         default='./datasets',
         help='define the datasets root path')
+    parser.add_argument(
+        '--input_ratio',
+        type=float,
+        default=0.5,
+        help='the input frame nums / the total frame nums')
+    parser.add_argument(
+        '--batch_size',
+        type=int,
+        default=8)
+    parser.add_argument(
+        '--device',
+        type=str,
+        default='cuda:0')
+
+    # model settings
+    parser.add_argument(
+        '--x_dim',
+        type=int,
+        default=90)
+    parser.add_argument(
+        '--y_dim',
+        type=int,
+        default=90)
+    parser.add_argument(
+        '--z_dim',
+        type=int,
+        default=256)
+
+    # datset settings
     parser.add_argument(
         '--dataset_split',
         default= [['01', '09', '15', '19'],
