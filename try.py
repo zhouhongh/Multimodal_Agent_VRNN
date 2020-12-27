@@ -5,7 +5,7 @@
 # @Email   : zhouhonghong@bupt.edu.cn
 
 import numpy as np
-
-x = np.array([[2,3],[3,4]])
-y = x[:-1,:]
-print(y.shape)
+from tqdm import tqdm
+import torch
+import time
+print("xxx%04d"%10)

@@ -10,10 +10,20 @@ def parse_opt():
 
     # overall settings
     parser.add_argument(
-        '--mode',
-        type=str,
-        default='train',
-        help='train or test')
+        '--drop_p',
+        type=float,
+        default=0.2,
+        help='dropout probability')
+    parser.add_argument(
+        '--max_iter',
+        type=int,
+        default=25000,
+        help='training iterations')
+    parser.add_argument(
+        '--lr',
+        type=float,
+        default=0.001,
+        help='learning rate')
     parser.add_argument(
         '--dataset',
         type=str,
@@ -32,35 +42,44 @@ def parse_opt():
     parser.add_argument(
         '--batch_size',
         type=int,
-        default=8)
+        default=100)
     parser.add_argument(
         '--device',
         type=str,
-        default='cuda:0')
+        default='cuda:2')
 
     # model settings
     parser.add_argument(
         '--x_dim',
-        type=int,
-        default=90)
+        type=list,
+        default=[45, 45, 5])
     parser.add_argument(
-        '--y_dim',
+        '--h_dim',
         type=int,
-        default=90)
+        default=256)
     parser.add_argument(
         '--z_dim',
         type=int,
-        default=256)
+        default=10)
+    parser.add_argument(
+        '--region_split',
+        type=list,
+        default=[[0, 1, 2],
+                 [3, 4, 5],
+                 [6, 7, 8],
+                 [9, 10, 11],
+                 [12, 13, 14]]
+    )
 
     # datset settings
+    parser.add_argument('--job', type=int, default=4, help='subprocesses to use for data loading')
     parser.add_argument(
         '--dataset_split',
         default= [['01', '09', '15', '19'],
                   ['05', '07', '10', '16'],
                   ['02', '03', '20', '18'],
                   ['04', '06', '08', '11'],
-                  ['12', '13', '14', '17'],
-                  ['21']],
+                  ['12', '13', '14', '17', '21']],
         help='split the SBU dataset to 5 part, the first 4 parts used for training, and last part(21) for testing')
     parser.add_argument(
         '--train_mean',

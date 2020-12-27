@@ -4,11 +4,10 @@
 # @Author  : zhouhonghong
 # @Email   : zhouhonghong@bupt.edu.cn
 import numpy as np
-
-def read_SBU_txt( txt_path):
+def read_SBU_txt(txt_path):
     """
     :param txt_path:
-    :return: np.array([frame_num, 90]) with dtype:float32
+    :return: np.array([frame_num, 90]) with dtype: float32
     """
     with open(txt_path) as f:
         data = f.readlines()
@@ -40,6 +39,14 @@ def normalize_SBU_data(data, data_mean, data_std):
         data_out.append(norm_seq)
     return data_out
 
+def unNormalizeData(normalizedData, data_mean, data_std):
+    origData = np.multiply(normalizedData, data_mean) + data_std
+    return origData
+
 if __name__ == '__main__':
-    data = read_SBU_txt('./datasets/SBU/01/01/skeleton_pos_001.txt')
-    print(data.shape)
+    data = np.random.randint(0,4,(5,90))
+    data_mean = np.ones((90))
+    data_std = np.ones((90))
+    data_s = unNormalizeData(data,data_mean,data_std).astype(np.int)
+    print(data)
+    print(data_s)
